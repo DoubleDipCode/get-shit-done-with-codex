@@ -208,7 +208,7 @@ Task(
 
 ## 9. Handle Planner Return
 
-- **`## PLANNING COMPLETE`:** Display plan count. If `--skip-verify` or `plan_checker_enabled` is false (from init): skip to step 13. Otherwise: step 10.
+- **`## PLANNING COMPLETE`:** Display plan count. If `--skip-verify` or `plan_checker_enabled` is false (from init): skip to step 11b (Codex Plan Review). Otherwise: step 10.
 - **`## CHECKPOINT REACHED`:** Present to user, get response, spawn continuation (step 12)
 - **`## PLANNING INCONCLUSIVE`:** Show attempts, offer: Add context / Retry / Manual
 
@@ -263,8 +263,122 @@ Task(
 
 ## 11. Handle Checker Return
 
-- **`## VERIFICATION PASSED`:** Display confirmation, proceed to step 13.
+- **`## VERIFICATION PASSED`:** Display confirmation, proceed to step 11b (Codex Plan Review).
 - **`## ISSUES FOUND`:** Display issues, check iteration count, proceed to step 12.
+
+## 11b. Codex Plan Review (Supplementary)
+
+**Also reached when `--skip-verify` was used** (Codex as the only verification).
+
+Read config:
+
+```bash
+CODEX_VERIFY=$(cat .planning/config.json 2>/dev/null | grep -o '"codex_verify"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "true")
+```
+
+**If `codex_verify` is `false`:** Skip to step 13.
+
+**If `codex_verify` is `true`:**
+
+Display banner:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD > CODEX PLAN REVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Read plans and context for the prompt:
+
+```bash
+PLANS_CONTENT=$(cat "${PHASE_DIR}"/*-PLAN.md 2>/dev/null)
+REQUIREMENTS_CONTENT=$(cat .planning/REQUIREMENTS.md 2>/dev/null)
+# CONTEXT_CONTENT already loaded in step 4
+```
+
+Run Codex:
+
+```bash
+codex exec "You are an independent reviewer of software execution plans.
+
+Review these plans for Phase ${PHASE}: ${PHASE_NAME}
+
+<plans>
+${PLANS_CONTENT}
+</plans>
+
+<requirements>
+${REQUIREMENTS_CONTENT}
+</requirements>
+
+<phase_context>
+${CONTEXT_CONTENT}
+</phase_context>
+
+Verify:
+1. Every requirement has at least one task addressing it
+2. Task dependencies are correct and acyclic
+3. Each task is specific enough to execute without ambiguity
+4. Plans honor all locked decisions in phase_context
+5. No obvious gaps, missing error handling, or security risks
+6. Wave assignments make sense (independent tasks in same wave)
+
+Respond ONLY with one of:
+
+VERDICT: PASS
+
+or:
+
+VERDICT: ISSUES
+- [issue description]
+- [issue description]" \
+  --full-auto \
+  --output-last-message /tmp/codex-plan-verify.txt \
+  -C "$PROJECT_DIR" 2>/tmp/codex-err.txt
+```
+
+### Handle Codex result
+
+**If exit code non-zero:**
+
+```bash
+if grep -qi "credit\|quota\|rate.limit\|billing\|unauthorized\|payment" /tmp/codex-err.txt; then
+  # Credit exhaustion — auto-disable
+  sed -i '' 's/"codex_verify"[[:space:]]*:[[:space:]]*true/"codex_verify": false/' .planning/config.json
+  # Display: "Codex credits exhausted — disabling codex_verify for this session"
+  # Continue to step 13
+else
+  # Non-credit error — skip but do NOT disable
+  # Display: "Codex unavailable — skipping Codex verification"
+  # Continue to step 13
+fi
+```
+
+**If exit code zero:** Parse verdict:
+
+```bash
+VERDICT=$(grep "^VERDICT:" /tmp/codex-plan-verify.txt | head -1 | sed 's/VERDICT:[[:space:]]*//')
+
+case "$VERDICT" in
+  PASS)
+    # Display: "Codex plan review: PASS"
+    # Continue to step 13
+    ;;
+  ISSUES)
+    # Extract issues
+    ITEMS=$(sed -n '/^VERDICT:/,$ { /^- /p }' /tmp/codex-plan-verify.txt)
+    # Prepend [Codex] to each issue
+    CODEX_ISSUES=$(echo "$ITEMS" | sed 's/^- /- [Codex] /')
+    # Feed into revision loop (step 12) — merge with any existing checker issues
+    ;;
+  *)
+    # Unexpected format — treat as PASS with warning
+    # Display: "Codex returned unexpected format — treating as PASS"
+    # Continue to step 13
+    ;;
+esac
+```
+
+**When VERDICT is ISSUES:** The `[Codex]`-prefixed issues are fed into the revision loop (step 12) identically to checker issues. The planner does not need to know issues came from Codex.
 
 ## 12. Revision Loop (Max 3 Iterations)
 

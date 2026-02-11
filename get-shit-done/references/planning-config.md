@@ -22,6 +22,7 @@ Configuration options for `.planning/` directory behavior.
 | `git.branching_strategy` | `"none"` | Git branching approach: `"none"`, `"phase"`, or `"milestone"` |
 | `git.phase_branch_template` | `"gsd/phase-{phase}-{slug}"` | Branch template for phase strategy |
 | `git.milestone_branch_template` | `"gsd/{milestone}-{slug}"` | Branch template for milestone strategy |
+| `workflow.codex_verify` | `true` | Enable Codex CLI as supplementary verification layer |
 </config_schema>
 
 <commit_docs_behavior>
@@ -190,5 +191,55 @@ Squash merge is recommended — keeps main branch history clean while preserving
 | `milestone` | Release branches, staging environments, PR per version |
 
 </branching_strategy_behavior>
+
+<codex_verify_behavior>
+
+**Purpose:** `workflow.codex_verify` enables OpenAI Codex CLI as an independent, supplementary verification layer at three points in the GSD workflow: plan review, pre-execution sanity check, and post-execution review. Codex provides a second opinion from a different model alongside existing Claude-based checkers. It never replaces or blocks existing verification — it supplements only.
+
+**Default value:** `true`. When not present in config, defaults to `true` (backward compatible).
+
+**Config schema:**
+
+```json
+"workflow": {
+  "research": true,
+  "plan_check": true,
+  "verifier": true,
+  "codex_verify": true
+}
+```
+
+**Checking the config:**
+
+```bash
+CODEX_VERIFY=$(cat .planning/config.json 2>/dev/null | grep -o '"codex_verify"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "true")
+```
+
+**When `codex_verify: true` (default):**
+- Plan phase: Codex reviews plans after gsd-plan-checker passes (or when `--skip-verify` is used)
+- Execute phase: Codex runs a pre-execution sanity check before wave execution
+- Execute phase: Codex reviews code changes after execution, before gsd-verifier
+
+**When `codex_verify: false`:**
+- All three Codex checks are skipped entirely
+- Existing Claude-based verification is unaffected
+
+**Credit exhaustion auto-disable behavior:**
+When a Codex invocation fails due to credit, quota, rate limit, billing, or authorization errors, GSD automatically:
+1. Sets `codex_verify` to `false` in `.planning/config.json`
+2. Displays: `Codex credits exhausted — disabling codex_verify for this session`
+3. Continues the workflow without Codex verification
+
+This prevents repeated failed Codex calls from slowing down the session. The setting persists in config.json, so re-enable it manually when credits are restored.
+
+**Transient error behavior (network, timeout, Codex not installed):**
+When a Codex invocation fails for non-credit reasons:
+1. Displays: `Codex unavailable — skipping Codex verification`
+2. Continues the workflow without Codex verification
+3. Does **not** auto-disable `codex_verify` in config — the next invocation will try again
+
+This distinction ensures transient issues don't permanently disable Codex verification.
+
+</codex_verify_behavior>
 
 </planning_config>

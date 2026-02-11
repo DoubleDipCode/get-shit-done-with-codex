@@ -71,6 +71,100 @@ Report:
 ```
 </step>
 
+<step name="codex_pre_execution">
+**Codex Pre-Execution Sanity Check (Supplementary)**
+
+Read config:
+
+```bash
+CODEX_VERIFY=$(cat .planning/config.json 2>/dev/null | grep -o '"codex_verify"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "true")
+```
+
+**If `codex_verify` is `false`:** Skip to execute_waves.
+
+**If `codex_verify` is `true`:**
+
+Display:
+```
+◆ Codex pre-execution review...
+```
+
+Build wave structure string and read plans:
+
+```bash
+PLANS_CONTENT=$(cat "${PHASE_DIR}"/*-PLAN.md 2>/dev/null)
+```
+
+Run Codex:
+
+```bash
+codex exec "You are reviewing execution plans immediately before they run.
+This is a final sanity check — flag only significant concerns.
+
+Phase ${PHASE}: ${PHASE_NAME}
+
+<plans>
+${PLANS_CONTENT}
+</plans>
+
+<wave_structure>
+${WAVE_STRUCTURE}
+</wave_structure>
+
+Quick check:
+1. Any plans that would conflict if run in parallel within the same wave?
+2. Any tasks that could cause data loss or irreversible changes?
+3. Any missing dependencies between waves?
+4. Anything that looks fundamentally wrong?
+
+Respond ONLY with:
+
+VERDICT: PASS
+
+or:
+
+VERDICT: CONCERNS
+- [concern]
+- [concern]" \
+  --full-auto \
+  --output-last-message /tmp/codex-pre-exec-verify.txt \
+  -C "$PROJECT_DIR" 2>/tmp/codex-err.txt
+```
+
+**If exit code non-zero:**
+
+```bash
+if grep -qi "credit\|quota\|rate.limit\|billing\|unauthorized\|payment" /tmp/codex-err.txt; then
+  sed -i '' 's/"codex_verify"[[:space:]]*:[[:space:]]*true/"codex_verify": false/' .planning/config.json
+  # Display: "Codex credits exhausted — disabling codex_verify for this session"
+else
+  # Display: "Codex unavailable — skipping pre-execution review"
+fi
+```
+
+**If exit code zero:** Parse verdict:
+
+```bash
+VERDICT=$(grep "^VERDICT:" /tmp/codex-pre-exec-verify.txt | head -1 | sed 's/VERDICT:[[:space:]]*//')
+
+case "$VERDICT" in
+  PASS)
+    # Display: "Codex pre-execution review: PASS"
+    ;;
+  CONCERNS)
+    ITEMS=$(sed -n '/^VERDICT:/,$ { /^- /p }' /tmp/codex-pre-exec-verify.txt)
+    # Present to user with AskUserQuestion:
+    # 1. Proceed anyway → continue
+    # 2. Abort → stop execution
+    # 3. Go back to planning → display: "Run /gsd:plan-phase {X}"
+    ;;
+  *)
+    # Unexpected format — treat as PASS
+    ;;
+esac
+```
+</step>
+
 <step name="execute_waves">
 Execute each wave in sequence. Within a wave: parallel if `PARALLELIZATION=true`, sequential if `false`.
 
@@ -224,6 +318,121 @@ After all waves:
 ### Issues Encountered
 [Aggregate from SUMMARYs, or "None"]
 ```
+</step>
+
+<step name="codex_post_execution">
+**Codex Post-Execution Review (Supplementary)**
+
+Read config:
+
+```bash
+CODEX_VERIFY=$(cat .planning/config.json 2>/dev/null | grep -o '"codex_verify"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "true")
+```
+
+**If `codex_verify` is `false`:** Skip to verify_phase_goal.
+
+**If `codex_verify` is `true`:**
+
+Display banner:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD > CODEX POST-EXECUTION REVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Compute git diff for this phase's commits:
+
+```bash
+FIRST_COMMIT=$(git log --oneline --reverse --grep="(${PHASE}-" --format="%H" | head -1)
+git diff "${FIRST_COMMIT}^..HEAD" > /tmp/codex-phase-diff.txt
+
+DIFF_SIZE=$(wc -c < /tmp/codex-phase-diff.txt)
+if [ "$DIFF_SIZE" -gt 102400 ]; then
+  git diff "${FIRST_COMMIT}^..HEAD" --stat > /tmp/codex-phase-diff.txt
+  echo "--- (diff truncated to --stat due to size) ---" >> /tmp/codex-phase-diff.txt
+fi
+```
+
+Read plans, diff, and summaries:
+
+```bash
+PLANS_CONTENT=$(cat "${PHASE_DIR}"/*-PLAN.md 2>/dev/null)
+DIFF_CONTENT=$(cat /tmp/codex-phase-diff.txt 2>/dev/null)
+SUMMARIES_CONTENT=$(cat "${PHASE_DIR}"/*-SUMMARY.md 2>/dev/null)
+```
+
+Run Codex:
+
+```bash
+codex exec "You are reviewing code changes after a phase of software development.
+
+Phase ${PHASE}: ${PHASE_NAME}
+
+<original_plans>
+${PLANS_CONTENT}
+</original_plans>
+
+<code_changes>
+${DIFF_CONTENT}
+</code_changes>
+
+<execution_summaries>
+${SUMMARIES_CONTENT}
+</execution_summaries>
+
+Verify:
+1. Were all planned tasks actually implemented in the code?
+2. Any planned functionality missing from the changes?
+3. Any security or correctness concerns in the new code?
+4. Do the changes match the plan intent, or did execution drift?
+5. Any dead code, debug artifacts, or incomplete implementations?
+
+Respond ONLY with:
+
+VERDICT: PASS
+
+or:
+
+VERDICT: GAPS
+- [gap description]
+- [gap description]" \
+  --full-auto \
+  --output-last-message /tmp/codex-post-exec-verify.txt \
+  -C "$PROJECT_DIR" 2>/tmp/codex-err.txt
+```
+
+**If exit code non-zero:**
+
+```bash
+if grep -qi "credit\|quota\|rate.limit\|billing\|unauthorized\|payment" /tmp/codex-err.txt; then
+  sed -i '' 's/"codex_verify"[[:space:]]*:[[:space:]]*true/"codex_verify": false/' .planning/config.json
+  # Display: "Codex credits exhausted — disabling codex_verify for this session"
+else
+  # Display: "Codex unavailable — skipping post-execution review"
+fi
+```
+
+**If exit code zero:** Parse verdict:
+
+```bash
+VERDICT=$(grep "^VERDICT:" /tmp/codex-post-exec-verify.txt | head -1 | sed 's/VERDICT:[[:space:]]*//')
+
+case "$VERDICT" in
+  PASS)
+    # Display: "Codex post-execution review: PASS"
+    ;;
+  GAPS)
+    ITEMS=$(sed -n '/^VERDICT:/,$ { /^- /p }' /tmp/codex-post-exec-verify.txt)
+    echo "$ITEMS" > "${PHASE_DIR}/${PHASE}-CODEX-REVIEW.txt"
+    # Display: "Codex found gaps — written to ${PHASE}-CODEX-REVIEW.txt, will be referenced by verifier"
+    ;;
+  *)
+    # Unexpected format — treat as PASS
+    ;;
+esac
+```
+
+**When VERDICT is GAPS:** The gaps file is referenced by the verifier as additional input. The verifier can confirm or dismiss Codex's findings.
 </step>
 
 <step name="verify_phase_goal">

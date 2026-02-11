@@ -28,6 +28,7 @@ Parse current values (default to `true` if not present):
 - `workflow.research` — spawn researcher during plan-phase
 - `workflow.plan_check` — spawn plan checker during plan-phase
 - `workflow.verifier` — spawn verifier during execute-phase
+- `workflow.codex_verify` — run Codex as supplementary verification layer
 - `model_profile` — which model each agent uses (default: `balanced`)
 - `git.branching_strategy` — branching approach (default: `"none"`)
 </step>
@@ -75,6 +76,15 @@ AskUserQuestion([
     ]
   },
   {
+    question: "Run Codex verification? (independent second-opinion via OpenAI Codex)",
+    header: "Codex",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Run Codex plan review, pre-execution check, and post-execution review" },
+      { label: "No", description: "Skip Codex verification (auto-disabled on credit exhaustion)" }
+    ]
+  },
+  {
     question: "Git branching strategy?",
     header: "Branching",
     multiSelect: false,
@@ -98,7 +108,8 @@ Merge new settings into existing config.json:
   "workflow": {
     "research": true/false,
     "plan_check": true/false,
-    "verifier": true/false
+    "verifier": true/false,
+    "codex_verify": true/false
   },
   "git": {
     "branching_strategy": "none" | "phase" | "milestone"
@@ -123,6 +134,7 @@ Display:
 | Plan Researcher      | {On/Off} |
 | Plan Checker         | {On/Off} |
 | Execution Verifier   | {On/Off} |
+| Codex Verification   | {On/Off} |
 | Git Branching        | {None/Per Phase/Per Milestone} |
 
 These settings apply to future /gsd:plan-phase and /gsd:execute-phase runs.
@@ -139,7 +151,7 @@ Quick commands:
 
 <success_criteria>
 - [ ] Current config read
-- [ ] User presented with 5 settings (profile + 3 workflow toggles + git branching)
-- [ ] Config updated with model_profile, workflow, and git sections
+- [ ] User presented with 6 settings (profile + 4 workflow toggles + git branching)
+- [ ] Config updated with model_profile, workflow (including codex_verify), and git sections
 - [ ] Changes confirmed to user
 </success_criteria>
