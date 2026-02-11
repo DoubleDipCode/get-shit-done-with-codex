@@ -619,6 +619,47 @@ This removes all GSD commands, agents, hooks, and settings while preserving your
 
 ---
 
+## Syncing with Upstream GSD
+
+This is a fork of [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done) with Codex verification and the `cgsd` namespace. To pull in upstream updates:
+
+```bash
+# Fetch latest upstream changes
+git fetch upstream
+
+# Rebase our custom commits on top
+git rebase upstream/main
+
+# Force-push to our fork
+git push --force-with-lease
+```
+
+Our custom changes are exactly 2 commits on top of upstream:
+1. **Codex verification** — adds `workflow.codex_verify` to settings, plan-phase, and execute-phase workflows
+2. **cgsd rename** — renames commands/agents/hooks from `gsd` to `cgsd`
+
+If conflicts occur during rebase, they will typically be in:
+- `get-shit-done/workflows/settings.md` — resolve by keeping upstream structure, re-adding the codex_verify question
+- `get-shit-done/workflows/plan-phase.md` — resolve by keeping upstream structure, re-adding step 11b (Codex Plan Review)
+- `get-shit-done/workflows/execute-phase.md` — resolve by keeping upstream structure, re-adding codex_pre_execution and codex_post_execution steps
+- Many files from the cgsd rename — if upstream restructures significantly, it may be easier to accept upstream and re-run the rename
+
+If the rename commit produces too many conflicts (>10 files), abort and use the clean approach:
+```bash
+git rebase --abort
+git reset --hard upstream/main
+# Re-apply codex verification manually to workflow files
+# Re-run the cgsd rename script/agent
+git push --force-with-lease
+```
+
+The upstream remote is already configured:
+```
+upstream  https://github.com/gsd-build/get-shit-done.git
+```
+
+---
+
 ## Community Ports
 
 OpenCode and Gemini CLI are now natively supported via `npx get-shit-done-cc`.
