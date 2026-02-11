@@ -590,7 +590,7 @@ function convertClaudeToGeminiToml(content) {
  * 
  * @param {string} srcDir - Source directory (e.g., commands/cgsd/)
  * @param {string} destDir - Destination directory (e.g., command/)
- * @param {string} prefix - Prefix for filenames (e.g., 'gsd')
+ * @param {string} prefix - Prefix for filenames (e.g., 'cgsd')
  * @param {string} pathPrefix - Path prefix for file references
  * @param {string} runtime - Target runtime ('claude' or 'opencode')
  */
@@ -816,7 +816,7 @@ function uninstall(isGlobal, runtime = 'claude') {
     }
   } else {
     // Claude Code & Gemini: remove commands/cgsd/ directory
-    const gsdCommandsDir = path.join(targetDir, 'commands', 'gsd');
+    const gsdCommandsDir = path.join(targetDir, 'commands', 'cgsd');
     if (fs.existsSync(gsdCommandsDir)) {
       fs.rmSync(gsdCommandsDir, { recursive: true });
       removedCount++;
@@ -1173,7 +1173,7 @@ function generateManifest(dir, baseDir) {
  */
 function writeManifest(configDir) {
   const gsdDir = path.join(configDir, 'get-shit-done');
-  const commandsDir = path.join(configDir, 'commands', 'gsd');
+  const commandsDir = path.join(configDir, 'commands', 'cgsd');
   const agentsDir = path.join(configDir, 'agents');
   const manifest = { version: pkg.version, timestamp: new Date().toISOString(), files: {} };
 
@@ -1311,8 +1311,8 @@ function install(isGlobal, runtime = 'claude') {
     fs.mkdirSync(commandDir, { recursive: true });
     
     // Copy commands/cgsd/*.md as command/cgsd-*.md (flatten structure)
-    const gsdSrc = path.join(src, 'commands', 'gsd');
-    copyFlattenedCommands(gsdSrc, commandDir, 'gsd', pathPrefix, runtime);
+    const gsdSrc = path.join(src, 'commands', 'cgsd');
+    copyFlattenedCommands(gsdSrc, commandDir, 'cgsd', pathPrefix, runtime);
     if (verifyInstalled(commandDir, 'command/cgsd-*')) {
       const count = fs.readdirSync(commandDir).filter(f => f.startsWith('cgsd-')).length;
       console.log(`  ${green}✓${reset} Installed ${count} commands to command/`);
@@ -1324,13 +1324,13 @@ function install(isGlobal, runtime = 'claude') {
     const commandsDir = path.join(targetDir, 'commands');
     fs.mkdirSync(commandsDir, { recursive: true });
     
-    const gsdSrc = path.join(src, 'commands', 'gsd');
-    const gsdDest = path.join(commandsDir, 'gsd');
+    const gsdSrc = path.join(src, 'commands', 'cgsd');
+    const gsdDest = path.join(commandsDir, 'cgsd');
     copyWithPathReplacement(gsdSrc, gsdDest, pathPrefix, runtime);
-    if (verifyInstalled(gsdDest, 'commands/gsd')) {
-      console.log(`  ${green}✓${reset} Installed commands/gsd`);
+    if (verifyInstalled(gsdDest, 'commands/cgsd')) {
+      console.log(`  ${green}✓${reset} Installed commands/cgsd`);
     } else {
-      failures.push('commands/gsd');
+      failures.push('commands/cgsd');
     }
   }
 
