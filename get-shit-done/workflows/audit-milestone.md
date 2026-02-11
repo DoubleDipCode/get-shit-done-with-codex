@@ -18,7 +18,7 @@ Extract from init JSON: `milestone_version`, `milestone_name`, `phase_count`, `c
 
 Resolve integration checker model:
 ```bash
-CHECKER_MODEL=$(node ~/.claude/get-shit-done/bin/gsd-tools.js resolve-model gsd-integration-checker --raw)
+CHECKER_MODEL=$(node ~/.claude/get-shit-done/bin/gsd-tools.js resolve-model cgsd-integration-checker --raw)
 ```
 
 ## 1. Determine Milestone Scope
@@ -65,7 +65,7 @@ Phase exports: {from SUMMARYs}
 API routes: {routes created}
 
 Verify cross-phase wiring and E2E user flows.",
-  subagent_type="gsd-integration-checker",
+  subagent_type="cgsd-integration-checker",
   model="{integration_checker_model}"
 )
 ```
@@ -145,7 +145,7 @@ All requirements covered. Cross-phase integration verified. E2E flows complete.
 
 **Complete milestone** — archive and tag
 
-/gsd:complete-milestone {version}
+/cgsd:complete-milestone {version}
 
 <sub>/clear first → fresh context window</sub>
 
@@ -182,7 +182,7 @@ All requirements covered. Cross-phase integration verified. E2E flows complete.
 
 **Plan gap closure** — create phases to complete milestone
 
-/gsd:plan-milestone-gaps
+/cgsd:plan-milestone-gaps
 
 <sub>/clear first → fresh context window</sub>
 
@@ -190,7 +190,7 @@ All requirements covered. Cross-phase integration verified. E2E flows complete.
 
 **Also available:**
 - cat .planning/v{version}-MILESTONE-AUDIT.md — see full report
-- /gsd:complete-milestone {version} — proceed anyway (accept tech debt)
+- /cgsd:complete-milestone {version} — proceed anyway (accept tech debt)
 
 ───────────────────────────────────────────────────────────────
 
@@ -220,11 +220,11 @@ All requirements met. No critical blockers. Accumulated tech debt needs review.
 
 **A. Complete milestone** — accept debt, track in backlog
 
-/gsd:complete-milestone {version}
+/cgsd:complete-milestone {version}
 
 **B. Plan cleanup phase** — address debt before completing
 
-/gsd:plan-milestone-gaps
+/cgsd:plan-milestone-gaps
 
 <sub>/clear first → fresh context window</sub>
 

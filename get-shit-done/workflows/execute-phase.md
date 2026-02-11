@@ -156,7 +156,7 @@ case "$VERDICT" in
     # Present to user with AskUserQuestion:
     # 1. Proceed anyway → continue
     # 2. Abort → stop execution
-    # 3. Go back to planning → display: "Run /gsd:plan-phase {X}"
+    # 3. Go back to planning → display: "Run /cgsd:plan-phase {X}"
     ;;
   *)
     # Unexpected format — treat as PASS
@@ -195,7 +195,7 @@ Execute each wave in sequence. Within a wave: parallel if `PARALLELIZATION=true`
 
    ```
    Task(
-     subagent_type="gsd-executor",
+     subagent_type="cgsd-executor",
      model="{executor_model}",
      prompt="
        <objective>
@@ -444,7 +444,7 @@ Task(
 Phase directory: {phase_dir}
 Phase goal: {goal from ROADMAP.md}
 Check must_haves against actual codebase. Create VERIFICATION.md.",
-  subagent_type="gsd-verifier",
+  subagent_type="cgsd-verifier",
   model="{verifier_model}"
 )
 ```
@@ -458,7 +458,7 @@ grep "^status:" "$PHASE_DIR"/*-VERIFICATION.md | cut -d: -f2 | tr -d ' '
 |--------|--------|
 | `passed` | → update_roadmap |
 | `human_needed` | Present items for human testing, get approval or feedback |
-| `gaps_found` | Present gap summary, offer `/gsd:plan-phase {phase} --gaps` |
+| `gaps_found` | Present gap summary, offer `/cgsd:plan-phase {phase} --gaps` |
 
 **If human_needed:**
 ```
@@ -484,15 +484,15 @@ All automated checks passed. {N} items need human testing:
 ---
 ## ▶ Next Up
 
-`/gsd:plan-phase {X} --gaps`
+`/cgsd:plan-phase {X} --gaps`
 
 <sub>`/clear` first → fresh context window</sub>
 
 Also: `cat {phase_dir}/{phase}-VERIFICATION.md` — full report
-Also: `/gsd:verify-work {X}` — manual testing first
+Also: `/cgsd:verify-work {X}` — manual testing first
 ```
 
-Gap closure cycle: `/gsd:plan-phase {X} --gaps` reads VERIFICATION.md → creates gap plans with `gap_closure: true` → user runs `/gsd:execute-phase {X} --gaps-only` → verifier re-runs.
+Gap closure cycle: `/cgsd:plan-phase {X} --gaps` reads VERIFICATION.md → creates gap plans with `gap_closure: true` → user runs `/cgsd:execute-phase {X} --gaps-only` → verifier re-runs.
 </step>
 
 <step name="update_roadmap">
@@ -511,7 +511,7 @@ node ~/.claude/get-shit-done/bin/gsd-tools.js commit "docs(phase-{X}): complete 
 
 **Phase {X+1}: {Name}** — {Goal}
 
-`/gsd:plan-phase {X+1}`
+`/cgsd:plan-phase {X+1}`
 
 <sub>`/clear` first for fresh context</sub>
 ```
@@ -522,7 +522,7 @@ MILESTONE COMPLETE!
 
 All {N} phases executed.
 
-`/gsd:complete-milestone`
+`/cgsd:complete-milestone`
 ```
 </step>
 
@@ -541,7 +541,7 @@ Orchestrator: ~10-15% context. Subagents: fresh 200k each. No polling (Task bloc
 </failure_handling>
 
 <resumption>
-Re-run `/gsd:execute-phase {phase}` → discover_plans finds completed SUMMARYs → skips them → resumes from first incomplete plan → continues wave execution.
+Re-run `/cgsd:execute-phase {phase}` → discover_plans finds completed SUMMARYs → skips them → resumes from first incomplete plan → continues wave execution.
 
 STATE.md tracks: last completed plan, current wave, pending checkpoints.
 </resumption>

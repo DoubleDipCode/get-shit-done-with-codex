@@ -1,5 +1,5 @@
 <purpose>
-Create executable phase prompts (PLAN.md files) for a roadmap phase with integrated research and verification. Default flow: Research (if needed) -> Plan -> Verify -> Done. Orchestrates gsd-phase-researcher, gsd-planner, and gsd-plan-checker agents with a revision loop (max 3 iterations).
+Create executable phase prompts (PLAN.md files) for a roadmap phase with integrated research and verification. Default flow: Research (if needed) -> Plan -> Verify -> Done. Orchestrates cgsd-phase-researcher, cgsd-planner, and cgsd-plan-checker agents with a revision loop (max 3 iterations).
 </purpose>
 
 <required_reading>
@@ -22,7 +22,7 @@ Parse JSON for: `researcher_model`, `planner_model`, `checker_model`, `research_
 
 **File contents (from --include):** `state_content`, `roadmap_content`, `requirements_content`, `context_content`, `research_content`, `verification_content`, `uat_content`. These are null if files don't exist.
 
-**If `planning_exists` is false:** Error — run `/gsd:new-project` first.
+**If `planning_exists` is false:** Error — run `/cgsd:new-project` first.
 
 ## 2. Parse and Normalize Arguments
 
@@ -70,7 +70,7 @@ Display banner:
 ◆ Spawning researcher...
 ```
 
-### Spawn gsd-phase-researcher
+### Spawn cgsd-phase-researcher
 
 ```bash
 PHASE_DESC=$(node ~/.claude/get-shit-done/bin/gsd-tools.js roadmap get-phase "${PHASE}" | jq -r '.section')
@@ -89,7 +89,7 @@ Answer: "What do I need to know to PLAN this phase well?"
 </objective>
 
 <phase_context>
-IMPORTANT: If CONTEXT.md exists below, it contains user decisions from /gsd:discuss-phase.
+IMPORTANT: If CONTEXT.md exists below, it contains user decisions from /cgsd:discuss-phase.
 - **Decisions** = Locked — research THESE deeply, no alternatives
 - **Claude's Discretion** = Freedom areas — research options, recommend
 - **Deferred Ideas** = Out of scope — ignore
@@ -110,7 +110,7 @@ Write to: {phase_dir}/{phase}-RESEARCH.md
 
 ```
 Task(
-  prompt="First, read ~/.claude/agents/gsd-phase-researcher.md for your role and instructions.\n\n" + research_prompt,
+  prompt="First, read ~/.claude/agents/cgsd-phase-researcher.md for your role and instructions.\n\n" + research_prompt,
   subagent_type="general-purpose",
   model="{researcher_model}",
   description="Research Phase {phase}"
@@ -145,7 +145,7 @@ UAT_CONTENT=$(echo "$INIT" | jq -r '.uat_content // empty')
 CONTEXT_CONTENT=$(echo "$INIT" | jq -r '.context_content // empty')
 ```
 
-## 8. Spawn gsd-planner Agent
+## 8. Spawn cgsd-planner Agent
 
 Display banner:
 ```
@@ -168,7 +168,7 @@ Planner prompt:
 **Requirements:** {requirements_content}
 
 **Phase Context:**
-IMPORTANT: If context exists below, it contains USER DECISIONS from /gsd:discuss-phase.
+IMPORTANT: If context exists below, it contains USER DECISIONS from /cgsd:discuss-phase.
 - **Decisions** = LOCKED — honor exactly, do not revisit
 - **Claude's Discretion** = Freedom — make implementation choices
 - **Deferred Ideas** = Out of scope — do NOT include
@@ -180,7 +180,7 @@ IMPORTANT: If context exists below, it contains USER DECISIONS from /gsd:discuss
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /gsd:execute-phase. Plans need:
+Output consumed by /cgsd:execute-phase. Plans need:
 - Frontmatter (wave, depends_on, files_modified, autonomous)
 - Tasks in XML format
 - Verification criteria
@@ -199,7 +199,7 @@ Output consumed by /gsd:execute-phase. Plans need:
 
 ```
 Task(
-  prompt="First, read ~/.claude/agents/gsd-planner.md for your role and instructions.\n\n" + filled_prompt,
+  prompt="First, read ~/.claude/agents/cgsd-planner.md for your role and instructions.\n\n" + filled_prompt,
   subagent_type="general-purpose",
   model="{planner_model}",
   description="Plan Phase {phase}"
@@ -212,7 +212,7 @@ Task(
 - **`## CHECKPOINT REACHED`:** Present to user, get response, spawn continuation (step 12)
 - **`## PLANNING INCONCLUSIVE`:** Show attempts, offer: Add context / Retry / Manual
 
-## 10. Spawn gsd-plan-checker Agent
+## 10. Spawn cgsd-plan-checker Agent
 
 Display banner:
 ```
@@ -255,7 +255,7 @@ IMPORTANT: Plans MUST honor user decisions. Flag as issue if plans contradict.
 ```
 Task(
   prompt=checker_prompt,
-  subagent_type="gsd-plan-checker",
+  subagent_type="cgsd-plan-checker",
   model="{checker_model}",
   description="Verify Phase {phase} plans"
 )
@@ -416,7 +416,7 @@ Return what changed.
 
 ```
 Task(
-  prompt="First, read ~/.claude/agents/gsd-planner.md for your role and instructions.\n\n" + revision_prompt,
+  prompt="First, read ~/.claude/agents/cgsd-planner.md for your role and instructions.\n\n" + revision_prompt,
   subagent_type="general-purpose",
   model="{planner_model}",
   description="Revise Phase {phase} plans"
@@ -460,7 +460,7 @@ Verification: {Passed | Passed with override | Skipped}
 
 **Execute Phase {X}** — run all {N} plans
 
-/gsd:execute-phase {X}
+/cgsd:execute-phase {X}
 
 <sub>/clear first → fresh context window</sub>
 
@@ -468,7 +468,7 @@ Verification: {Passed | Passed with override | Skipped}
 
 **Also available:**
 - cat .planning/phases/{phase-dir}/*-PLAN.md — review plans
-- /gsd:plan-phase {X} --research — re-research first
+- /cgsd:plan-phase {X} --research — re-research first
 
 ───────────────────────────────────────────────────────────────
 </offer_next>
@@ -479,11 +479,11 @@ Verification: {Passed | Passed with override | Skipped}
 - [ ] Phase directory created if needed
 - [ ] CONTEXT.md loaded early (step 4) and passed to ALL agents
 - [ ] Research completed (unless --skip-research or --gaps or exists)
-- [ ] gsd-phase-researcher spawned with CONTEXT.md
+- [ ] cgsd-phase-researcher spawned with CONTEXT.md
 - [ ] Existing plans checked
-- [ ] gsd-planner spawned with CONTEXT.md + RESEARCH.md
+- [ ] cgsd-planner spawned with CONTEXT.md + RESEARCH.md
 - [ ] Plans created (PLANNING COMPLETE or CHECKPOINT handled)
-- [ ] gsd-plan-checker spawned with CONTEXT.md
+- [ ] cgsd-plan-checker spawned with CONTEXT.md
 - [ ] Verification passed OR user override OR max iterations with user decision
 - [ ] User sees status between agent spawns
 - [ ] User knows next steps

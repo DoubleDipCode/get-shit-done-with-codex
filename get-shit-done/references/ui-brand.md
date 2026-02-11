@@ -115,8 +115,8 @@ Always at end of major completions.
 ───────────────────────────────────────────────────────────────
 
 **Also available:**
-- `/gsd:alternative-1` — description
-- `/gsd:alternative-2` — description
+- `/cgsd:alternative-1` — description
+- `/cgsd:alternative-2` — description
 
 ───────────────────────────────────────────────────────────────
 ```

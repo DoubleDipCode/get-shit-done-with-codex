@@ -10,8 +10,8 @@ Configuration options for `.planning/` directory behavior.
 },
 "git": {
   "branching_strategy": "none",
-  "phase_branch_template": "gsd/phase-{phase}-{slug}",
-  "milestone_branch_template": "gsd/{milestone}-{slug}"
+  "phase_branch_template": "cgsd/phase-{phase}-{slug}",
+  "milestone_branch_template": "cgsd/{milestone}-{slug}"
 }
 ```
 
@@ -20,8 +20,8 @@ Configuration options for `.planning/` directory behavior.
 | `commit_docs` | `true` | Whether to commit planning artifacts to git |
 | `search_gitignored` | `false` | Add `--no-ignore` to broad rg searches |
 | `git.branching_strategy` | `"none"` | Git branching approach: `"none"`, `"phase"`, or `"milestone"` |
-| `git.phase_branch_template` | `"gsd/phase-{phase}-{slug}"` | Branch template for phase strategy |
-| `git.milestone_branch_template` | `"gsd/{milestone}-{slug}"` | Branch template for milestone strategy |
+| `git.phase_branch_template` | `"cgsd/phase-{phase}-{slug}"` | Branch template for phase strategy |
+| `git.milestone_branch_template` | `"cgsd/{milestone}-{slug}"` | Branch template for milestone strategy |
 | `workflow.codex_verify` | `true` | Enable Codex CLI as supplementary verification layer |
 </config_schema>
 
@@ -216,9 +216,9 @@ CODEX_VERIFY=$(cat .planning/config.json 2>/dev/null | grep -o '"codex_verify"[[
 ```
 
 **When `codex_verify: true` (default):**
-- Plan phase: Codex reviews plans after gsd-plan-checker passes (or when `--skip-verify` is used)
+- Plan phase: Codex reviews plans after cgsd-plan-checker passes (or when `--skip-verify` is used)
 - Execute phase: Codex runs a pre-execution sanity check before wave execution
-- Execute phase: Codex reviews code changes after execution, before gsd-verifier
+- Execute phase: Codex reviews code changes after execution, before cgsd-verifier
 
 **When `codex_verify: false`:**
 - All three Codex checks are skipped entirely

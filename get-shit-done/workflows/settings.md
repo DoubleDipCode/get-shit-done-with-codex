@@ -137,13 +137,13 @@ Display:
 | Codex Verification   | {On/Off} |
 | Git Branching        | {None/Per Phase/Per Milestone} |
 
-These settings apply to future /gsd:plan-phase and /gsd:execute-phase runs.
+These settings apply to future /cgsd:plan-phase and /cgsd:execute-phase runs.
 
 Quick commands:
-- /gsd:set-profile <profile> — switch model profile
-- /gsd:plan-phase --research — force research
-- /gsd:plan-phase --skip-research — skip research
-- /gsd:plan-phase --skip-verify — skip plan check
+- /cgsd:set-profile <profile> — switch model profile
+- /cgsd:plan-phase --research — force research
+- /cgsd:plan-phase --skip-research — skip research
+- /cgsd:plan-phase --skip-verify — skip plan check
 ```
 </step>
 

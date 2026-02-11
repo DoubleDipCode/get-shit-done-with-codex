@@ -1,5 +1,5 @@
 <purpose>
-Validate built features through conversational testing with persistent state. Creates UAT.md that tracks test progress, survives /clear, and feeds gaps into /gsd:plan-phase --gaps.
+Validate built features through conversational testing with persistent state. Creates UAT.md that tracks test progress, survives /clear, and feeds gaps into /cgsd:plan-phase --gaps.
 
 User tests, Claude records. One test at a time. Plain text responses.
 </purpose>
@@ -69,7 +69,7 @@ If no, continue to `create_uat_file`.
 ```
 No active UAT sessions.
 
-Provide a phase number to start testing (e.g., /gsd:verify-work 4)
+Provide a phase number to start testing (e.g., /cgsd:verify-work 4)
 ```
 
 **If no active sessions AND $ARGUMENTS provided:**
@@ -317,8 +317,8 @@ Present summary:
 ```
 All tests passed. Ready to continue.
 
-- `/gsd:plan-phase {next}` — Plan next phase
-- `/gsd:execute-phase {next}` — Execute next phase
+- `/cgsd:plan-phase {next}` — Plan next phase
+- `/cgsd:execute-phase {next}` — Execute next phase
 ```
 </step>
 
@@ -355,7 +355,7 @@ Display:
 ◆ Spawning planner for gap closure...
 ```
 
-Spawn gsd-planner in --gaps mode:
+Spawn cgsd-planner in --gaps mode:
 
 ```
 Task(
@@ -377,11 +377,11 @@ Task(
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /gsd:execute-phase
+Output consumed by /cgsd:execute-phase
 Plans must be executable prompts.
 </downstream_consumer>
 """,
-  subagent_type="gsd-planner",
+  subagent_type="cgsd-planner",
   model="{planner_model}",
   description="Plan gap fixes for Phase {phase}"
 )
@@ -406,7 +406,7 @@ Display:
 
 Initialize: `iteration_count = 1`
 
-Spawn gsd-plan-checker:
+Spawn cgsd-plan-checker:
 
 ```
 Task(
@@ -427,7 +427,7 @@ Return one of:
 - ## ISSUES FOUND — structured issue list
 </expected_output>
 """,
-  subagent_type="gsd-plan-checker",
+  subagent_type="cgsd-plan-checker",
   model="{checker_model}",
   description="Verify Phase {phase} fix plans"
 )
@@ -445,7 +445,7 @@ On return:
 
 Display: `Sending back to planner for revision... (iteration {N}/3)`
 
-Spawn gsd-planner with revision context:
+Spawn cgsd-planner with revision context:
 
 ```
 Task(
@@ -468,7 +468,7 @@ Read existing PLAN.md files. Make targeted updates to address checker issues.
 Do NOT replan from scratch unless issues are fundamental.
 </instructions>
 """,
-  subagent_type="gsd-planner",
+  subagent_type="cgsd-planner",
   model="{planner_model}",
   description="Revise Phase {phase} plans"
 )
@@ -484,7 +484,7 @@ Display: `Max iterations reached. {N} issues remain.`
 Offer options:
 1. Force proceed (execute despite issues)
 2. Provide guidance (user gives direction, retry)
-3. Abandon (exit, user runs /gsd:plan-phase manually)
+3. Abandon (exit, user runs /cgsd:plan-phase manually)
 
 Wait for user response.
 </step>
@@ -512,7 +512,7 @@ Plans verified and ready for execution.
 
 **Execute fixes** — run fix plans
 
-`/clear` then `/gsd:execute-phase {phase} --gaps-only`
+`/clear` then `/cgsd:execute-phase {phase} --gaps-only`
 
 ───────────────────────────────────────────────────────────────
 ```
@@ -563,8 +563,8 @@ Default to **major** if unclear. User can correct if needed.
 - [ ] Batched writes: on issue, every 5 passes, or completion
 - [ ] Committed on completion
 - [ ] If issues: parallel debug agents diagnose root causes
-- [ ] If issues: gsd-planner creates fix plans (gap_closure mode)
-- [ ] If issues: gsd-plan-checker verifies fix plans
+- [ ] If issues: cgsd-planner creates fix plans (gap_closure mode)
+- [ ] If issues: cgsd-plan-checker verifies fix plans
 - [ ] If issues: revision loop until plans pass (max 3 iterations)
-- [ ] Ready for `/gsd:execute-phase --gaps-only` when complete
+- [ ] Ready for `/cgsd:execute-phase --gaps-only` when complete
 </success_criteria>

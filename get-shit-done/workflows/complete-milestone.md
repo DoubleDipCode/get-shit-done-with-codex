@@ -592,7 +592,7 @@ Tag: v[X.Y]
 
 **Start Next Milestone** — questioning → research → requirements → roadmap
 
-`/gsd:new-milestone`
+`/cgsd:new-milestone`
 
 <sub>`/clear` first → fresh context window</sub>
 
@@ -639,6 +639,6 @@ Milestone completion is successful when:
 - [ ] STATE.md updated with fresh project reference
 - [ ] Git tag created (v[X.Y])
 - [ ] Milestone commit made (includes archive files and deletion)
-- [ ] User knows next step (/gsd:new-milestone)
+- [ ] User knows next step (/cgsd:new-milestone)
 
 </success_criteria>

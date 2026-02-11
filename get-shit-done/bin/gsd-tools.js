@@ -123,17 +123,17 @@ const { execSync } = require('child_process');
 // ─── Model Profile Table ─────────────────────────────────────────────────────
 
 const MODEL_PROFILES = {
-  'gsd-planner':              { quality: 'opus', balanced: 'opus',   budget: 'sonnet' },
-  'gsd-roadmapper':           { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
-  'gsd-executor':             { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
-  'gsd-phase-researcher':     { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-project-researcher':   { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-research-synthesizer': { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-debugger':             { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
-  'gsd-codebase-mapper':      { quality: 'sonnet', balanced: 'haiku', budget: 'haiku' },
-  'gsd-verifier':             { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-plan-checker':         { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-integration-checker':  { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
+  'cgsd-planner':              { quality: 'opus', balanced: 'opus',   budget: 'sonnet' },
+  'cgsd-roadmapper':           { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
+  'cgsd-executor':             { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
+  'cgsd-phase-researcher':     { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
+  'cgsd-project-researcher':   { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
+  'cgsd-research-synthesizer': { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
+  'cgsd-debugger':             { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
+  'cgsd-codebase-mapper':      { quality: 'sonnet', balanced: 'haiku', budget: 'haiku' },
+  'cgsd-verifier':             { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
+  'cgsd-plan-checker':         { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
+  'cgsd-integration-checker':  { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -2568,7 +2568,7 @@ function cmdPhaseAdd(cwd, description, raw) {
   fs.mkdirSync(dirPath, { recursive: true });
 
   // Build phase entry
-  const phaseEntry = `\n### Phase ${newPhaseNum}: ${description}\n\n**Goal:** [To be planned]\n**Depends on:** Phase ${maxPhase}\n**Plans:** 0 plans\n\nPlans:\n- [ ] TBD (run /gsd:plan-phase ${newPhaseNum} to break down)\n`;
+  const phaseEntry = `\n### Phase ${newPhaseNum}: ${description}\n\n**Goal:** [To be planned]\n**Depends on:** Phase ${maxPhase}\n**Plans:** 0 plans\n\nPlans:\n- [ ] TBD (run /cgsd:plan-phase ${newPhaseNum} to break down)\n`;
 
   // Find insertion point: before last "---" or at end
   let updatedContent;
@@ -2638,7 +2638,7 @@ function cmdPhaseInsert(cwd, afterPhase, description, raw) {
   fs.mkdirSync(dirPath, { recursive: true });
 
   // Build phase entry
-  const phaseEntry = `\n### Phase ${decimalPhase}: ${description} (INSERTED)\n\n**Goal:** [Urgent work - to be planned]\n**Depends on:** Phase ${afterPhase}\n**Plans:** 0 plans\n\nPlans:\n- [ ] TBD (run /gsd:plan-phase ${decimalPhase} to break down)\n`;
+  const phaseEntry = `\n### Phase ${decimalPhase}: ${description} (INSERTED)\n\n**Goal:** [Urgent work - to be planned]\n**Depends on:** Phase ${afterPhase}\n**Plans:** 0 plans\n\nPlans:\n- [ ] TBD (run /cgsd:plan-phase ${decimalPhase} to break down)\n`;
 
   // Insert after the target phase section
   const headerPattern = new RegExp(`(###\\s*Phase\\s+${afterPhaseEscaped}:[^\\n]*\\n)`, 'i');
@@ -3432,7 +3432,7 @@ function cmdScaffold(cwd, type, options, raw) {
   switch (type) {
     case 'context': {
       filePath = path.join(phaseDir, `${padded}-CONTEXT.md`);
-      content = `---\nphase: "${padded}"\nname: "${name || phaseInfo?.phase_name || 'Unnamed'}"\ncreated: ${today}\n---\n\n# Phase ${phase}: ${name || phaseInfo?.phase_name || 'Unnamed'} — Context\n\n## Decisions\n\n_Decisions will be captured during /gsd:discuss-phase ${phase}_\n\n## Discretion Areas\n\n_Areas where the executor can use judgment_\n\n## Deferred Ideas\n\n_Ideas to consider later_\n`;
+      content = `---\nphase: "${padded}"\nname: "${name || phaseInfo?.phase_name || 'Unnamed'}"\ncreated: ${today}\n---\n\n# Phase ${phase}: ${name || phaseInfo?.phase_name || 'Unnamed'} — Context\n\n## Decisions\n\n_Decisions will be captured during /cgsd:discuss-phase ${phase}_\n\n## Discretion Areas\n\n_Areas where the executor can use judgment_\n\n## Deferred Ideas\n\n_Ideas to consider later_\n`;
       break;
     }
     case 'uat': {
@@ -3573,8 +3573,8 @@ function cmdInitExecutePhase(cwd, phase, includes, raw) {
 
   const result = {
     // Models
-    executor_model: resolveModelInternal(cwd, 'gsd-executor'),
-    verifier_model: resolveModelInternal(cwd, 'gsd-verifier'),
+    executor_model: resolveModelInternal(cwd, 'cgsd-executor'),
+    verifier_model: resolveModelInternal(cwd, 'cgsd-verifier'),
 
     // Config flags
     commit_docs: config.commit_docs,
@@ -3644,9 +3644,9 @@ function cmdInitPlanPhase(cwd, phase, includes, raw) {
 
   const result = {
     // Models
-    researcher_model: resolveModelInternal(cwd, 'gsd-phase-researcher'),
-    planner_model: resolveModelInternal(cwd, 'gsd-planner'),
-    checker_model: resolveModelInternal(cwd, 'gsd-plan-checker'),
+    researcher_model: resolveModelInternal(cwd, 'cgsd-phase-researcher'),
+    planner_model: resolveModelInternal(cwd, 'cgsd-planner'),
+    checker_model: resolveModelInternal(cwd, 'cgsd-plan-checker'),
 
     // Workflow flags
     research_enabled: config.research,
@@ -3758,9 +3758,9 @@ function cmdInitNewProject(cwd, raw) {
 
   const result = {
     // Models
-    researcher_model: resolveModelInternal(cwd, 'gsd-project-researcher'),
-    synthesizer_model: resolveModelInternal(cwd, 'gsd-research-synthesizer'),
-    roadmapper_model: resolveModelInternal(cwd, 'gsd-roadmapper'),
+    researcher_model: resolveModelInternal(cwd, 'cgsd-project-researcher'),
+    synthesizer_model: resolveModelInternal(cwd, 'cgsd-research-synthesizer'),
+    roadmapper_model: resolveModelInternal(cwd, 'cgsd-roadmapper'),
 
     // Config
     commit_docs: config.commit_docs,
@@ -3792,9 +3792,9 @@ function cmdInitNewMilestone(cwd, raw) {
 
   const result = {
     // Models
-    researcher_model: resolveModelInternal(cwd, 'gsd-project-researcher'),
-    synthesizer_model: resolveModelInternal(cwd, 'gsd-research-synthesizer'),
-    roadmapper_model: resolveModelInternal(cwd, 'gsd-roadmapper'),
+    researcher_model: resolveModelInternal(cwd, 'cgsd-project-researcher'),
+    synthesizer_model: resolveModelInternal(cwd, 'cgsd-research-synthesizer'),
+    roadmapper_model: resolveModelInternal(cwd, 'cgsd-roadmapper'),
 
     // Config
     commit_docs: config.commit_docs,
@@ -3833,8 +3833,8 @@ function cmdInitQuick(cwd, description, raw) {
 
   const result = {
     // Models
-    planner_model: resolveModelInternal(cwd, 'gsd-planner'),
-    executor_model: resolveModelInternal(cwd, 'gsd-executor'),
+    planner_model: resolveModelInternal(cwd, 'cgsd-planner'),
+    executor_model: resolveModelInternal(cwd, 'cgsd-executor'),
 
     // Config
     commit_docs: config.commit_docs,
@@ -3897,8 +3897,8 @@ function cmdInitVerifyWork(cwd, phase, raw) {
 
   const result = {
     // Models
-    planner_model: resolveModelInternal(cwd, 'gsd-planner'),
-    checker_model: resolveModelInternal(cwd, 'gsd-plan-checker'),
+    planner_model: resolveModelInternal(cwd, 'cgsd-planner'),
+    checker_model: resolveModelInternal(cwd, 'cgsd-plan-checker'),
 
     // Config
     commit_docs: config.commit_docs,
@@ -4080,7 +4080,7 @@ function cmdInitMapCodebase(cwd, raw) {
 
   const result = {
     // Models
-    mapper_model: resolveModelInternal(cwd, 'gsd-codebase-mapper'),
+    mapper_model: resolveModelInternal(cwd, 'cgsd-codebase-mapper'),
 
     // Config
     commit_docs: config.commit_docs,
@@ -4164,8 +4164,8 @@ function cmdInitProgress(cwd, includes, raw) {
 
   const result = {
     // Models
-    executor_model: resolveModelInternal(cwd, 'gsd-executor'),
-    planner_model: resolveModelInternal(cwd, 'gsd-planner'),
+    executor_model: resolveModelInternal(cwd, 'cgsd-executor'),
+    planner_model: resolveModelInternal(cwd, 'cgsd-planner'),
 
     // Config
     commit_docs: config.commit_docs,
