@@ -630,9 +630,15 @@ git fetch upstream
 # Rebase our custom commits on top
 git rebase upstream/main
 
+# Build hooks and reinstall
+node scripts/build-hooks.js
+node bin/install.js --claude --global
+
 # Force-push to our fork
 git push --force-with-lease
 ```
+
+> **Note:** `hooks/dist/` is gitignored — always run `build-hooks.js` before `install.js` or hooks won't be installed. Skip `--force-statusline` unless the hook file itself changed, to avoid overwriting custom statusline config.
 
 Our custom changes are exactly 2 commits on top of upstream:
 1. **Codex verification** — adds `workflow.codex_verify` to settings, plan-phase, and execute-phase workflows
